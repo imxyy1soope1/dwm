@@ -3,6 +3,7 @@
 #ifndef DWM_H_
 #define DWM_H_
 
+#include <sys/epoll.h>
 #include <X11/Xlib.h>
 
 /* enums */
@@ -15,9 +16,19 @@ enum { WMProtocols, WMDelete, WMState, WMTakeFocus, WMLast }; /* default atoms *
 enum { ClkTagBar, ClkLtSymbol, ClkStatusText, ClkWinTitle,
        ClkClientWin, ClkRootWin, ClkLast }; /* clicks */
 
+typedef struct{
+	int selected;
+	int occupied;
+	int urgent;
+} TagState;
+
+typedef struct {
+	int isfixed, isfloating, isurgent, neverfocus, oldstate, isfullscreen;
+} ClientState;
+
 typedef union {
-    int i;
-    unsigned int ui;
+    long i;
+    unsigned long ui;
     float f;
     const void *v;
 } Arg;
@@ -45,6 +56,7 @@ struct Client {
     Client *snext;
     Monitor *mon;
     Window win;
+    ClientState prevstate;
 };
 
 typedef struct {
@@ -61,6 +73,7 @@ typedef struct {
 
 struct Monitor {
     char ltsymbol[16];
+    char lastltsymbol[16];
     float mfact;
     int nmaster;
     int num;
@@ -74,14 +87,17 @@ struct Monitor {
     unsigned int seltags;
     unsigned int sellt;
     unsigned int tagset[2];
+    TagState tagstate;
     int showbar;
     int topbar;
     Client *clients;
     Client *sel;
+    Client *lastsel;
     Client *stack;
     Monitor *next;
     Window barwin;
     const Layout *lt[2];
+    const Layout *lastlt;
 };
 
 typedef struct {
@@ -93,99 +109,117 @@ typedef struct {
     int monitor;
 } Rule;
 
+// test
+extern int bh;
+
+/* macros */
+#define BUTTONMASK              (ButtonPressMask|ButtonReleaseMask)
+#define CLEANMASK(mask)         (mask & ~(numlockmask|LockMask) & (ShiftMask|ControlMask|Mod1Mask|Mod2Mask|Mod3Mask|Mod4Mask|Mod5Mask))
+#define INTERSECT(x,y,w,h,m)    (MAX(0, MIN((x)+(w),(m)->wx+(m)->ww) - MAX((x),(m)->wx)) \
+                               * MAX(0, MIN((y)+(h),(m)->wy+(m)->wh) - MAX((y),(m)->wy)))
+#define ISVISIBLE(C)            ((C->tags & C->mon->tagset[C->mon->seltags]))
+#define LENGTH(X)               (sizeof X / sizeof X[0])
+#define MOUSEMASK               (BUTTONMASK|PointerMotionMask)
+#define WIDTH(X)                ((X)->w + 2 * (X)->bw)
+#define HEIGHT(X)               ((X)->h + 2 * (X)->bw)
+#define TAGMASK                 ((1 << LENGTH(tags)) - 1)
+#define TEXTW(X)                (drw_fontset_getwidth(drw, (X)) + lrpad)
+
 /* function declarations */
-static void applyrules(Client *c);
-static int applysizehints(Client *c, int *x, int *y, int *w, int *h, int interact);
-static void arrange(Monitor *m);
-static void arrangemon(Monitor *m);
-static void attach(Client *c);
-static void attachstack(Client *c);
-static void buttonpress(XEvent *e);
-static void checkotherwm(void);
-static void cleanup(void);
-static void cleanupmon(Monitor *mon);
-static void clientmessage(XEvent *e);
-static void configure(Client *c);
-static void configurenotify(XEvent *e);
-static void configurerequest(XEvent *e);
-static Monitor *createmon(void);
-static void destroynotify(XEvent *e);
-static void detach(Client *c);
-static void detachstack(Client *c);
-static Monitor *dirtomon(int dir);
-static void drawbar(Monitor *m);
-static void drawbars(void);
-static void enternotify(XEvent *e);
-static void expose(XEvent *e);
-static void focus(Client *c);
-static void focusin(XEvent *e);
-static void focusmon(const Arg *arg);
-static void focusstack(const Arg *arg);
-static Atom getatomprop(Client *c, Atom prop);
-static int getrootptr(int *x, int *y);
-static long getstate(Window w);
-static int gettextprop(Window w, Atom atom, char *text, unsigned int size);
-static void grabbuttons(Client *c, int focused);
-static void grabkeys(void);
-static void incnmaster(const Arg *arg);
-static void keypress(XEvent *e);
-static void killclient(const Arg *arg);
-static void manage(Window w, XWindowAttributes *wa);
-static void mappingnotify(XEvent *e);
-static void maprequest(XEvent *e);
-static void monocle(Monitor *m);
-static void motionnotify(XEvent *e);
-static void movemouse(const Arg *arg);
-static Client *nexttiled(Client *c);
-static void pop(Client *c);
-static void propertynotify(XEvent *e);
-static void quit(const Arg *arg);
-static Monitor *recttomon(int x, int y, int w, int h);
-static void resize(Client *c, int x, int y, int w, int h, int interact);
-static void resizeclient(Client *c, int x, int y, int w, int h);
-static void resizemouse(const Arg *arg);
-static void restack(Monitor *m);
-static void restart(const Arg *arg);
-static void run(void);
-static void scan(void);
-static int sendevent(Client *c, Atom proto);
-static void sendmon(Client *c, Monitor *m);
-static void setclientstate(Client *c, long state);
-static void setfocus(Client *c);
-static void setfullscreen(Client *c, int fullscreen);
-static void setlayout(const Arg *arg);
-static void setmfact(const Arg *arg);
-static void setup(void);
-static void seturgent(Client *c, int urg);
-static void showhide(Client *c);
-static void sigchld(int unused);
-static void spawn(const Arg *arg);
-static void tag(const Arg *arg);
-static void tagmon(const Arg *arg);
-static void tile(Monitor *m);
-static void togglebar(const Arg *arg);
-static void togglefloating(const Arg *arg);
-static void toggletag(const Arg *arg);
-static void toggleview(const Arg *arg);
-static void unfocus(Client *c, int setfocus);
-static void unmanage(Client *c, int destroyed);
-static void unmapnotify(XEvent *e);
-static void updatebarpos(Monitor *m);
-static void updatebars(void);
-static void updateclientlist(void);
-static int updategeom(void);
-static void updatenumlockmask(void);
-static void updatesizehints(Client *c);
-static void updatestatus(void);
-static void updatetitle(Client *c);
-static void updatewindowtype(Client *c);
-static void updatewmhints(Client *c);
-static void view(const Arg *arg);
-static Client *wintoclient(Window w);
-static Monitor *wintomon(Window w);
-static int xerror(Display *dpy, XErrorEvent *ee);
-static int xerrordummy(Display *dpy, XErrorEvent *ee);
-static int xerrorstart(Display *dpy, XErrorEvent *ee);
-static void zoom(const Arg *arg);
+void applyrules(Client *c);
+int applysizehints(Client *c, int *x, int *y, int *w, int *h, int interact);
+void arrange(Monitor *m);
+void arrangemon(Monitor *m);
+void attach(Client *c);
+void attachstack(Client *c);
+void buttonpress(XEvent *e);
+void checkotherwm(void);
+void cleanup(void);
+void cleanupmon(Monitor *mon);
+void clientmessage(XEvent *e);
+void configure(Client *c);
+void configurenotify(XEvent *e);
+void configurerequest(XEvent *e);
+Monitor *createmon(void);
+void destroynotify(XEvent *e);
+void detach(Client *c);
+void detachstack(Client *c);
+Monitor *dirtomon(int dir);
+void drawbar(Monitor *m);
+void drawbars(void);
+void enternotify(XEvent *e);
+void expose(XEvent *e);
+void focus(Client *c);
+void focusin(XEvent *e);
+void focusmon(const Arg *arg);
+void focusstack(const Arg *arg);
+Atom getatomprop(Client *c, Atom prop);
+int getrootptr(int *x, int *y);
+long getstate(Window w);
+int gettextprop(Window w, Atom atom, char *text, unsigned int size);
+void grabbuttons(Client *c, int focused);
+void grabkeys(void);
+int handlexevnet(struct epoll_event *ev);
+void incnmaster(const Arg *arg);
+void keypress(XEvent *e);
+void killclient(const Arg *arg);
+void manage(Window w, XWindowAttributes *wa);
+void mappingnotify(XEvent *e);
+void maprequest(XEvent *e);
+void monocle(Monitor *m);
+void motionnotify(XEvent *e);
+void movemouse(const Arg *arg);
+Client *nexttiled(Client *c);
+void pop(Client *c);
+void propertynotify(XEvent *e);
+void quit(const Arg *arg);
+Monitor *recttomon(int x, int y, int w, int h);
+void resize(Client *c, int x, int y, int w, int h, int interact);
+void resizeclient(Client *c, int x, int y, int w, int h);
+void resizemouse(const Arg *arg);
+void restack(Monitor *m);
+void restart(const Arg *arg);
+void run(void);
+void scan(void);
+int sendevent(Client *c, Atom proto);
+void sendmon(Client *c, Monitor *m);
+void setclientstate(Client *c, long state);
+void setfocus(Client *c);
+void setfullscreen(Client *c, int fullscreen);
+void setlayout(const Arg *arg);
+void setlayoutsafe(const Arg *arg);
+void setmfact(const Arg *arg);
+void setup(void);
+void setupepoll(void);
+void seturgent(Client *c, int urg);
+void showhide(Client *c);
+void sigchld(int unused);
+void spawn(const Arg *arg);
+void tag(const Arg *arg);
+void tagmon(const Arg *arg);
+void togglebar(const Arg *arg);
+void togglefloating(const Arg *arg);
+void toggletag(const Arg *arg);
+void toggleview(const Arg *arg);
+void unfocus(Client *c, int setfocus);
+void unmanage(Client *c, int destroyed);
+void unmapnotify(XEvent *e);
+void updatebarpos(Monitor *m);
+void updatebars(void);
+void updateclientlist(void);
+int updategeom(void);
+void updatenumlockmask(void);
+void updatesizehints(Client *c);
+void updatestatus(void);
+void updatetitle(Client *c);
+void updatewindowtype(Client *c);
+void updatewmhints(Client *c);
+void view(const Arg *arg);
+Client *wintoclient(Window w);
+Monitor *wintomon(Window w);
+int xerror(Display *dpy, XErrorEvent *ee);
+int xerrordummy(Display *dpy, XErrorEvent *ee);
+int xerrorstart(Display *dpy, XErrorEvent *ee);
+void zoom(const Arg *arg);
 
 #endif /* DWM_H_ */

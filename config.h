@@ -5,6 +5,8 @@
 #include <X11/XF86keysym.h>
 
 #include "dwm.h"
+#include "layouts.h"
+#include "ipc.h"
 
 /* appearance */
 static const unsigned int borderpx  = 1;        /* border pixel of windows */
@@ -49,9 +51,20 @@ static const int lockfullscreen = 1; /* 1 will force focus on the fullscreen win
 
 static const Layout layouts[] = {
     /* symbol     arrange function */
-    { "[]=",      tile },    /* first entry is default */
-    { "><>",      NULL },    /* no layout function means floating behavior */
-    { "[M]",      monocle },
+    { "[]=",      tile                   },  /* first entry is default */
+	{ "[M]",      monocle                },
+	{ "[@]",      spiral                 },
+	{ "[\\]",     dwindle                },
+	{ "H[]",      deck                   },
+	{ "TTT",      bstack                 },
+	{ "===",      bstackhoriz            },
+	{ "HHH",      grid                   },
+	{ "###",      nrowgrid               },
+	{ "---",      horizgrid              },
+	{ ":::",      gaplessgrid            },
+	{ "|M|",      centeredmaster         },
+	{ ">M>",      centeredfloatingmaster },
+    { "><>",      NULL                   },  /* no layout function means floating behavior */
 };
 
 /* key definitions */
@@ -73,7 +86,6 @@ static const Key keys[] = {
     /* modifier                     key        function        argument */
     { MODKEY,                       XK_r,      spawn,          {.v = dmenucmd } },
     { MODKEY,                       XK_Return, spawn,          {.v = termcmd } },
-//  { MODKEY,                       XK_b,      togglebar,      {0} },
     { MODKEY,                       XK_Down,   focusstack,     {.i = +1 } },
     { MODKEY,                       XK_Up,     focusstack,     {.i = -1 } },
     { MODKEY,                       XK_i,      incnmaster,     {.i = +1 } },
@@ -107,20 +119,38 @@ static const Key keys[] = {
     { MODKEY,                       XK_Escape, quit,           {0} },
 };
 
+static const char *ipcsockpath = "/tmp/dwm.sock";
+static IPCCommand ipccommands[] = {
+    IPCCOMMAND( view,                1,      {ARG_TYPE_UINT}  ),
+    IPCCOMMAND( toggleview,          1,      {ARG_TYPE_UINT}  ),
+    IPCCOMMAND( tag,                 1,      {ARG_TYPE_UINT}  ),
+    IPCCOMMAND( toggletag,           1,      {ARG_TYPE_UINT}  ),
+    IPCCOMMAND( tagmon,              1,      {ARG_TYPE_UINT}  ),
+    IPCCOMMAND( focusmon,            1,      {ARG_TYPE_SINT}  ),
+    IPCCOMMAND( focusstack,          1,      {ARG_TYPE_SINT}  ),
+    IPCCOMMAND( zoom,                1,      {ARG_TYPE_NONE}  ),
+    IPCCOMMAND( incnmaster,          1,      {ARG_TYPE_SINT}  ),
+    IPCCOMMAND( killclient,          1,      {ARG_TYPE_SINT}  ),
+    IPCCOMMAND( togglefloating,      1,      {ARG_TYPE_NONE}  ),
+    IPCCOMMAND( setmfact,            1,      {ARG_TYPE_FLOAT} ),
+    IPCCOMMAND( setlayoutsafe,       1,      {ARG_TYPE_PTR}   ),
+    IPCCOMMAND( quit,                1,      {ARG_TYPE_NONE}  )
+};
+
 /* button definitions */
 /* click can be ClkTagBar, ClkLtSymbol, ClkStatusText, ClkWinTitle, ClkClientWin, or ClkRootWin */
 static const Button buttons[] = {
     /* click                event mask      button          function        argument */
-    { ClkLtSymbol,          0,              Button1,        setlayout,      {0} },
+    { ClkLtSymbol,          0,              Button1,        setlayout,      {0}                },
     { ClkLtSymbol,          0,              Button3,        setlayout,      {.v = &layouts[2]} },
-    { ClkWinTitle,          0,              Button2,        zoom,           {0} },
-    { ClkStatusText,        0,              Button2,        spawn,          {.v = termcmd } },
-    { ClkClientWin,         MODKEY,         Button1,        movemouse,      {0} },
-    { ClkClientWin,         MODKEY,         Button2,        togglefloating, {0} },
-    { ClkClientWin,         MODKEY,         Button3,        resizemouse,    {0} },
-    { ClkTagBar,            0,              Button1,        view,           {0} },
-    { ClkTagBar,            0,              Button3,        toggleview,     {0} },
-    { ClkTagBar,            MODKEY,         Button1,        tag,            {0} },
-    { ClkTagBar,            MODKEY,         Button3,        toggletag,      {0} },
+    { ClkWinTitle,          0,              Button2,        zoom,           {0}                },
+    { ClkStatusText,        0,              Button2,        spawn,          {.v = termcmd }    },
+    { ClkClientWin,         MODKEY,         Button1,        movemouse,      {0}                },
+    { ClkClientWin,         MODKEY,         Button2,        togglefloating, {0}                },
+    { ClkClientWin,         MODKEY,         Button3,        resizemouse,    {0}                },
+    { ClkTagBar,            0,              Button1,        view,           {0}                },
+    { ClkTagBar,            0,              Button3,        toggleview,     {0}                },
+    { ClkTagBar,            MODKEY,         Button1,        tag,            {0}                },
+    { ClkTagBar,            MODKEY,         Button3,        toggletag,      {0}                },
 };
 

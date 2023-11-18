@@ -3,10 +3,10 @@
 
 include config.mk
 
-SRC = drw.c dwm.c util.c
+SRC = drw.c dwm.c util.c layouts.c IPCClient.c yajl_dumps.c ipc.c
 OBJ = ${SRC:.c=.o}
 
-all: options dwm
+all: options dwm dwm-msg
 
 check: options dwm clean
 
@@ -24,8 +24,11 @@ ${OBJ}: config.h config.mk
 dwm: ${OBJ}
 	@${CC} -o $@ ${OBJ} ${LDFLAGS}
 
+dwm-msg: dwm-msg.o
+	@${CC} -o $@ $< ${LDFLAGS}
+
 clean:
-	@rm -f dwm ${OBJ} dwm-${VERSION}.tar.gz
+	@rm -f dwm dwm-msg dwm-msg.o ${OBJ} dwm-${VERSION}.tar.gz
 
 dist: clean
 	@mkdir -p dwm-${VERSION}
@@ -37,12 +40,13 @@ dist: clean
 
 install: all
 	@mkdir -p ${DESTDIR}${PREFIX}/bin
-	@cp -f dwm ${DESTDIR}${PREFIX}/bin
+	@cp -f dwm dwm-msg ${DESTDIR}${PREFIX}/bin
 	@chmod 755 ${DESTDIR}${PREFIX}/bin/dwm
+	@chmod 755 ${DESTDIR}${PREFIX}/bin/dwm-msg
 	@mkdir -p ${DESTDIR}${MANPREFIX}/man1
 	@sed "s/VERSION/${VERSION}/g" < dwm.1 > ${DESTDIR}${MANPREFIX}/man1/dwm.1
 	@chmod 644 ${DESTDIR}${MANPREFIX}/man1/dwm.1
-	@rm -f dwm ${OBJ} dwm-${VERSION}.tar.gz
+	@rm -f dwm dwm-msg dwm-msg.o ${OBJ} dwm-${VERSION}.tar.gz
 
 uninstall:
 	@rm -f ${DESTDIR}${PREFIX}/bin/dwm\
