@@ -101,7 +101,7 @@ struct Monitor {
 };
 
 typedef struct {
-    const char *class;
+    const char *cls;
     const char *instance;
     const char *title;
     unsigned int tags;

@@ -11,17 +11,17 @@
 #define YDOUBLE(num) yajl_gen_double(gen, num)
 #define YBOOL(v) yajl_gen_bool(gen, v)
 #define YNULL() yajl_gen_null(gen)
-#define YARR(body)                                                                                                                         \
-    {                                                                                                                                                        \
-        yajl_gen_array_open(gen);                                                                                                    \
-        body;                                                                                                                                            \
-        yajl_gen_array_close(gen);                                                                                                 \
+#define YARR(body)                 \
+    {                              \
+        yajl_gen_array_open(gen);  \
+        body;                      \
+        yajl_gen_array_close(gen); \
     }
-#define YMAP(body)                                                                                                                         \
-    {                                                                                                                                                        \
-        yajl_gen_map_open(gen);                                                                                                        \
-        body;                                                                                                                                            \
-        yajl_gen_map_close(gen);                                                                                                     \
+#define YMAP(body)               \
+    {                            \
+        yajl_gen_map_open(gen);  \
+        body;                    \
+        yajl_gen_map_close(gen); \
     }
 
 int dump_tag(yajl_gen gen, const char *name, const int tag_mask);
