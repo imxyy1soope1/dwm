@@ -8,3 +8,4 @@
 
 void die(const char *fmt, ...);
 void *ecalloc(size_t nmemb, size_t size);
+char **add_argument(char **original, char *opt_char, char *opt_arg, char *opt_name);
