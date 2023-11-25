@@ -52,9 +52,9 @@
 static const char broken[] = "broken";
 static char stext[256];
 static int screen;
-static int sw, sh;           /* X display screen geometry width, height */
-int bh;               /* bar height */
-static int lrpad;            /* sum of left and right padding for text */
+static int sw, sh;  /* X display screen geometry width, height */
+int bh;             /* bar height */
+static int lrpad;   /* sum of left and right padding for text */
 static int (*xerrorxlib)(Display *, XErrorEvent *);
 static unsigned int numlockmask = 0;
 static void (*handler[LASTEvent]) (XEvent *) = {
@@ -83,9 +83,9 @@ static Display *dpy;
 static Drw *drw;
 static Monitor *mons, *selmon, *lastselmon;
 static Window root, wmcheckwin;
-static int replacewm = 0;
+static int replacewm;
 static char **start_argv;
-
+FILE *_log;
 
 /* compile-time check if all tags fit into an unsigned int bit array. */
 struct NumTags { char limitexceeded[LENGTH(tags) > 31 ? -1 : 1]; };
@@ -314,8 +314,12 @@ cleanup(void)
     ipc_cleanup();
 
     if (close(epoll_fd) < 0) {
-        fprintf(stderr, "Failed to close epoll file descriptor\n");
+        ERROR("Failed to close epoll file descriptor\n");
     }
+
+#ifdef LOG_FILE
+    fclose(LOG_FILE);
+#endif
 }
 
 void
@@ -1135,7 +1139,7 @@ resizeclient(Client *c, int x, int y, int w, int h)
 void
 resizemouse(const Arg *arg)
 {
-    int ocx, ocy, nw, nh;
+    int ocx, ocy, nw, nh, mx, my;
     Client *c;
     Monitor *m;
     XEvent ev;
@@ -1150,6 +1154,8 @@ resizemouse(const Arg *arg)
     ocy = c->y;
     if (XGrabPointer(dpy, root, False, MOUSEMASK, GrabModeAsync, GrabModeAsync,
         None, cursor[CurResize]->cursor, CurrentTime) != GrabSuccess)
+        return;
+    if (!XQueryPointer(dpy, root, NULL, NULL, NULL, NULL, &mx, &my, NULL))
         return;
     XWarpPointer(dpy, None, c->win, 0, 0, 0, 0, c->w + c->bw - 1, c->h + c->bw - 1);
     do {
@@ -1217,6 +1223,15 @@ restack(Monitor *m)
 void
 restart(const Arg *arg)
 {
+    ipc_cleanup();
+
+    if (close(epoll_fd) < 0) {
+        ERROR("Failed to close epoll file descriptor\n");
+    }
+
+#ifdef LOG_FILE
+    fclose(LOG_FILE);
+#endif
     // TODO: better implementation
     char **new_argv;
     if (start_argv[1] == NULL) {
@@ -1492,6 +1507,9 @@ setup(void)
     XSelectInput(dpy, root, wa.event_mask);
     grabkeys();
     focus(NULL);
+#ifdef LOG_FILE
+    _log = fopen(LOG_FILEPATH, "w");
+#endif
     setupepoll();
 }
 

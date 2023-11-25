@@ -3,6 +3,7 @@
 #ifndef DWM_H_
 #define DWM_H_
 
+#include <bits/types/FILE.h>
 #include <sys/epoll.h>
 #include <X11/Xlib.h>
 
@@ -109,8 +110,9 @@ typedef struct {
     int monitor;
 } Rule;
 
-// test
+/* variables */
 extern int bh;
+extern FILE *_log;
 
 /* macros */
 #define BUTTONMASK              (ButtonPressMask|ButtonReleaseMask)
