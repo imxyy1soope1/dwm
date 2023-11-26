@@ -13,7 +13,7 @@
 #define IPC_MAGIC_ARR { 'D', 'W', 'M', '-', 'I', 'P', 'C'}
 #define IPC_MAGIC_LEN 7 // Not including null char
 
-#define IPCCOMMAND(FUNC, ARGC, TYPES)                                                                                    \
+#define IPCCOMMAND(FUNC, ARGC, TYPES) \
     { (char*)#FUNC, {FUNC }, ARGC, (ArgType[ARGC])TYPES }
 // clang-format on
 

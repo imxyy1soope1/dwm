@@ -194,7 +194,10 @@ connect_to_socket()
     addr.sun_family = AF_UNIX;
     strcpy(addr.sun_path, DEFAULT_SOCKET_PATH);
 
-    connect(sock, (const struct sockaddr *)&addr, sizeof(struct sockaddr_un));
+    int err = connect(sock, (const struct sockaddr *)&addr, sizeof(struct sockaddr_un));
+    if (err) {
+        fprintf(stderr, "Failed to connect to socket");
+    }
 
     sock_fd = sock;
 }
