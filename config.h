@@ -11,18 +11,6 @@
 #include "layouts.h"
 #include "ipc.h"
 
-/* logging */
-#define LOG_LEVEL_DEBUG    0
-#define LOG_LEVEL_INFO     1
-#define LOG_LEVEL_WARNING  2
-#define LOG_LEVEL_ERROR    3
-#define LOG_LEVEL_CRITICAL 4
-#define LOG_LEVEL_NOLOG    5
-
-#define LOG_LEVEL LOG_LEVEL_DEBUG
-#define LOG_FILE _log
-#define LOG_FILEPATH "/tmp/dwm.log"
-
 /* appearance */
 static const unsigned int borderpx  = 1;        /* border pixel of windows */
 static const unsigned int snap      = 32;       /* snap pixel */

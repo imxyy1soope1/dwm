@@ -1,12 +1,27 @@
 /* See LICENSE file for copyright and license details. */
 
-#include <stddef.h>
+#ifndef UTIL_H_
+#define UTIL_H_
 
-#include "config.h"
+#include <stddef.h>
+#include <bits/types/FILE.h>
 
 #define MAX(A, B)               ((A) > (B) ? (A) : (B))
 #define MIN(A, B)               ((A) < (B) ? (A) : (B))
 #define BETWEEN(X, A, B)        ((A) <= (X) && (X) <= (B))
+
+/* logging */
+#define LOG_LEVEL_DEBUG   0
+#define LOG_LEVEL_INFO    1
+#define LOG_LEVEL_WARNING 2
+#define LOG_LEVEL_ERROR   3
+#define LOG_LEVEL_FATAL   4
+#define LOG_LEVEL_NOLOG   5
+
+extern FILE *_log;
+#define LOG_LEVEL LOG_LEVEL_DEBUG
+#define LOG_FILE _log
+#define LOG_FILEPATH "/tmp/dwm.log"
 
 #if LOG_LEVEL == LOG_LEVEL_DEBUG
 #   ifdef LOG_FILE
@@ -48,14 +63,14 @@
 #   define ERROR(...)
 #endif
 
-#if LOG_LEVEL <= LOG_LEVEL_CRITICAL
+#if LOG_LEVEL <= LOG_LEVEL_FATAL
 #   ifdef LOG_FILE
-#       define CRITICAL(...) fprintf(LOG_FILE, "[CRITICAL] " __VA_ARGS__)
+#       define FATAL(...) fprintf(LOG_FILE, "[CRITICAL] " __VA_ARGS__); fprintf(stderr, __VA_ARGS__)
 #   else
-#       define CRITICAL(...) fprintf(stderr, "[CRITICAL]" __VA_ARGS__)
+#       define FATAL(...) fprintf(stderr, "[CRITICAL]" __VA_ARGS__)
 #   endif
 #else
-#   define CRITICAL(...)
+#   define FATAL(...)
 #endif
 
 void die(const char *fmt, ...);
@@ -64,3 +79,5 @@ int normalizepath(const char *path, char **normal);
 int mkdirp(const char *path);
 int parentdir(const char *path, char **parent);
 int nullterminate(char **str, size_t *len);
+
+#endif /* UTIL_H_ */
