@@ -1139,8 +1139,12 @@ resizeclient(Client *c, int x, int y, int w, int h)
 void
 resizemouse(const Arg *arg)
 {
-    int ocx, ocy, nw, nh, mx, my;
+    int ocx, ocy, nw, nh, nx, ny, ow, oh, mx, my, wx, wy;
+    unsigned int _mask;  /* not accessed */
+    Window _rw, _cw;  /* not accessed */
     Client *c;
+    int rsztype;
+    Cursor cur;
     Monitor *m;
     XEvent ev;
     Time lasttime = 0;
@@ -1150,14 +1154,30 @@ resizemouse(const Arg *arg)
     if (c->isfullscreen) /* no support resizing fullscreen windows by mouse */
         return;
     restack(selmon);
-    ocx = c->x;
-    ocy = c->y;
+    ocx = nx = c->x;
+    ocy = ny = c->y;
+    ow = WIDTH(c);
+    oh = HEIGHT(c);
+    if (XQueryPointer(dpy, c->win, &_rw, &_cw, &mx, &my, &wx, &wy, &_mask) != True)
+        return;
+    if (wx < (ow >> 1)) {
+        if (wy < (oh >> 1)) {
+            rsztype=  CurResizeTL;
+        } else {
+            rsztype = CurResizeBL;
+        }
+    } else {
+        if (wy < (oh >> 1)) {
+            rsztype = CurResizeTR;
+        } else {
+            rsztype = CurResizeBR;
+        }
+    }
+    cur = cursor[rsztype]->cursor;
     if (XGrabPointer(dpy, root, False, MOUSEMASK, GrabModeAsync, GrabModeAsync,
-        None, cursor[CurResize]->cursor, CurrentTime) != GrabSuccess)
+        None, cur, CurrentTime) != GrabSuccess)
         return;
-    if (!XQueryPointer(dpy, root, NULL, NULL, NULL, NULL, &mx, &my, NULL))
-        return;
-    XWarpPointer(dpy, None, c->win, 0, 0, 0, 0, c->w + c->bw - 1, c->h + c->bw - 1);
+    DEBUG("pointer position absolute(%d, %d) relative(%d, %d)\n", mx, my, wx, wy);
     do {
         XMaskEvent(dpy, MOUSEMASK|ExposureMask|SubstructureRedirectMask, &ev);
         switch(ev.type) {
@@ -1171,8 +1191,8 @@ resizemouse(const Arg *arg)
                 continue;
             lasttime = ev.xmotion.time;
 
-            nw = MAX(ev.xmotion.x - ocx - 2 * c->bw + 1, 1);
-            nh = MAX(ev.xmotion.y - ocy - 2 * c->bw + 1, 1);
+            nw = MAX(ow + (ev.xmotion.x - mx) * ((rsztype == CurResizeTR || rsztype == CurResizeBR) ? 1 : -1), 1);
+            nh = MAX(oh + (ev.xmotion.y - my) * ((rsztype == CurResizeBL || rsztype == CurResizeBR) ? 1 : -1), 1);
             if (c->mon->wx + nw >= selmon->wx && c->mon->wx + nw <= selmon->wx + selmon->ww
             && c->mon->wy + nh >= selmon->wy && c->mon->wy + nh <= selmon->wy + selmon->wh)
             {
@@ -1180,12 +1200,22 @@ resizemouse(const Arg *arg)
                 && (abs(nw - c->w) > snap || abs(nh - c->h) > snap))
                     togglefloating(NULL);
             }
-            if (!selmon->lt[selmon->sellt]->arrange || c->isfloating)
-                resize(c, c->x, c->y, nw, nh, 1);
+            if (!selmon->lt[selmon->sellt]->arrange || c->isfloating) {
+                switch (rsztype) {
+                case CurResizeTL:
+                case CurResizeBL:
+                    nx = ocx - (nw - ow);
+                    if (rsztype == CurResizeBL)
+                        break;
+                case CurResizeTR:
+                    ny = ocy - (nh - oh);
+                    break;
+                }
+                resize(c, nx, ny, nw, nh, 1);
+            }
             break;
         }
     } while (ev.type != ButtonRelease);
-    XWarpPointer(dpy, None, c->win, 0, 0, 0, 0, c->w + c->bw - 1, c->h + c->bw - 1);
     XUngrabPointer(dpy, CurrentTime);
     while (XCheckMaskEvent(dpy, EnterWindowMask, &ev));
     if ((m = recttomon(c->x, c->y, c->w, c->h)) != selmon) {
@@ -1477,7 +1507,10 @@ setup(void)
     netatom[NetClientList] = XInternAtom(dpy, "_NET_CLIENT_LIST", False);
     /* init cursors */
     cursor[CurNormal] = drw_cur_create(drw, XC_left_ptr);
-    cursor[CurResize] = drw_cur_create(drw, XC_sizing);
+    cursor[CurResizeTL] = drw_cur_create(drw, XC_top_left_corner);
+    cursor[CurResizeTR] = drw_cur_create(drw, XC_top_right_corner);
+    cursor[CurResizeBL] = drw_cur_create(drw, XC_bottom_left_corner);
+    cursor[CurResizeBR] = drw_cur_create(drw, XC_bottom_right_corner);
     cursor[CurMove] = drw_cur_create(drw, XC_fleur);
     /* init appearance */
     scheme = ecalloc(LENGTH(colors), sizeof(Clr *));
@@ -2015,8 +2048,8 @@ xerror(Display *dpy, XErrorEvent *ee)
     || (ee->request_code == X_GrabKey && ee->error_code == BadAccess)
     || (ee->request_code == X_CopyArea && ee->error_code == BadDrawable))
         return 0;
-    fprintf(stderr, "dwm: fatal error: request code=%d, error code=%d\n",
-        ee->request_code, ee->error_code);
+    FATAL("dwm: fatal error: request code=%d, error code=%d\n",
+          ee->request_code, ee->error_code);
     return xerrorxlib(dpy, ee); /* may call exit */
 }
 
