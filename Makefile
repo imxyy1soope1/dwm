@@ -22,10 +22,10 @@ options:
 ${OBJ}: config.h config.mk
 
 dwm: ${OBJ}
-	@${CC} -o $@ ${OBJ} ${LDFLAGS}
+	@${CC} -s -o $@ ${OBJ} ${LDFLAGS}
 
 dwm-msg: dwm-msg.o
-	@${CC} -o $@ $< ${LDFLAGS}
+	@${CC} -s -o $@ $< ${LDFLAGS}
 
 clean:
 	@rm -f dwm dwm-msg dwm-msg.o ${OBJ} dwm-${VERSION}.tar.gz
