@@ -62,12 +62,15 @@ struct Client {
     float mina, maxa;
     int x, y, w, h;
     int oldx, oldy, oldw, oldh;
+    int floatx, floaty, floatw, floath;
     int basew, baseh, incw, inch, maxw, maxh, minw, minh, hintsvalid;
     int bw, oldbw;
     unsigned int tags;
-    int isfixed, isfloating, isurgent, neverfocus, oldstate, isfullscreen;
+    int isfixed, isfloating, isurgent, neverfocus, oldstate, isfullscreen, isterminal, noswallow;
+    pid_t pid;
     Client *next;
     Client *snext;
+    Client *swallowing;
     Monitor *mon;
     Window win;
     ClientState prevstate;
@@ -79,6 +82,16 @@ typedef struct {
     void (*func)(const Arg *);
     const Arg arg;
 } Key;
+
+typedef struct {
+    const Arg arg;
+    int once;
+} Exec;
+
+typedef struct {
+    const char *name, *value;
+    int replace;
+} Env;
 
 typedef struct {
     const char *symbol;
@@ -120,6 +133,8 @@ typedef struct {
     const char *title;
     unsigned int tags;
     int isfloating;
+    int isterminal;
+    int noswallow;
     int monitor;
 } Rule;
 
@@ -127,8 +142,8 @@ typedef struct {
 extern int bh;
 extern FILE *_log;
 
-
 /* function declarations */
+void applyexecs(void);
 void applyrules(Client *c);
 int applysizehints(Client *c, int *x, int *y, int *w, int *h, int interact);
 void arrange(Monitor *m);
@@ -157,6 +172,7 @@ void focusin(XEvent *e);
 void focusmon(const Arg *arg);
 void focusstack(const Arg *arg);
 Atom getatomprop(Client *c, Atom prop);
+pid_t getparentprocess(pid_t p);
 int getrootptr(int *x, int *y);
 long getstate(Window w);
 int gettextprop(Window w, Atom atom, char *text, unsigned int size);
@@ -164,6 +180,7 @@ void grabbuttons(Client *c, int focused);
 void grabkeys(void);
 int handlexevnet(struct epoll_event *ev);
 void incnmaster(const Arg *arg);
+int isdescprocess(pid_t p, pid_t c);
 void keypress(XEvent *e);
 void killclient(const Arg *arg);
 void manage(Window w, XWindowAttributes *wa);
@@ -198,15 +215,20 @@ void seturgent(Client *c, int urg);
 void showhide(Client *c);
 void sigchld(int unused);
 void spawn(const Arg *arg);
+void swallow(Client *p, Client *c);
+Client *swallowingclient(Window w);
 void tag(const Arg *arg);
 void tagmon(const Arg *arg);
+Client *termforwin(const Client *c);
 void togglebar(const Arg *arg);
 void togglefloating(const Arg *arg);
+void togglefullscreen(const Arg *arg);
 void toggletag(const Arg *arg);
 void toggleview(const Arg *arg);
 void unfocus(Client *c, int setfocus);
 void unmanage(Client *c, int destroyed);
 void unmapnotify(XEvent *e);
+void unswallow(Client *c);
 void updatebarpos(Monitor *m);
 void updatebars(void);
 void updateclientlist(void);
@@ -218,6 +240,7 @@ void updatetitle(Client *c);
 void updatewindowtype(Client *c);
 void updatewmhints(Client *c);
 void view(const Arg *arg);
+pid_t winpid(Window w);
 Client *wintoclient(Window w);
 Monitor *wintomon(Window w);
 int xerror(Display *dpy, XErrorEvent *ee);

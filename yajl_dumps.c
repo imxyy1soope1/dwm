@@ -51,6 +51,12 @@ dump_client(yajl_gen gen, Client *c)
                 YSTR("width"); YINT(c->oldw);
                 YSTR("height"); YINT(c->oldh);
             )
+            YSTR("float"); YMAP(
+                YSTR("x"); YINT(c->floatx);
+                YSTR("y"); YINT(c->floaty);
+                YSTR("width"); YINT(c->floatw);
+                YSTR("height"); YINT(c->floath);
+            )
         )
 
         YSTR("size_hints"); YMAP(

@@ -195,11 +195,7 @@ connect_to_socket()
     strcpy(addr.sun_path, DEFAULT_SOCKET_PATH);
 
     int err = connect(sock, (const struct sockaddr *)&addr, sizeof(struct sockaddr_un));
-    if (err) {
-        fprintf(stderr, "Failed to connect to socket");
-    }
-
-    sock_fd = sock;
+    sock_fd = (err ? -1 : sock);
 }
 
 static int
