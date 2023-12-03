@@ -920,11 +920,11 @@ ipc_read_client(IPCClient *c, IPCMessageType *msg_type, uint32_t *msg_size,
 
     DEBUG("[fd %d] ", fd);
     if (*msg_size > 0)
-        DEBUG("Received message: '%.*s' ", *msg_size, *msg);
+        DEBUG_NOFMT("Received message: '%.*s' ", *msg_size, *msg);
     else
-        DEBUG("Received empty message ");
-    DEBUG("Message type: %" PRIu8 " ", (uint8_t)*msg_type);
-    DEBUG("Message size: %" PRIu32 "\n", *msg_size);
+        DEBUG_NOFMT("Received empty message ");
+    DEBUG_NOFMT("Message type: %" PRIu8 " ", (uint8_t)*msg_type);
+    DEBUG_NOFMT("Message size: %" PRIu32 "\n", *msg_size);
 
     return 0;
 }
