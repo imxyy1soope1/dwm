@@ -15,7 +15,7 @@
       overlay =
         final: prev: {
           dwm = prev.dwm.overrideAttrs (oldAttrs: {
-            buildInputs = with pkgs; [
+            buildInputs = with final.pkgs; [
               xorg.libX11
               xorg.libXft
               xorg.libXinerama
