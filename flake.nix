@@ -1,5 +1,5 @@
 {
-  description = "A very basic flake";
+  description = "dwm flake";
   inputs = {
     nixpkgs.url = "nixpkgs/nixos-unstable";
     flake-utils.url = "github:numtide/flake-utils";
@@ -14,10 +14,7 @@
     let
       overlay =
         final: prev: {
-          dwm = prev.dwm.overrideAttrs (oldAttrs: rec {
-            postPatch = (oldAttrs.postPatch or "") + ''
-              cp -r DEF/* .
-            '';
+          dwm = prev.dwm.overrideAttrs (oldAttrs: {
             buildInputs = with pkgs; [
               xorg.libX11
               xorg.libXft
@@ -45,9 +42,6 @@
         {
           packages.dwm = pkgs.dwm;
           packages.default = pkgs.dwm;
-          devShells.default = pkgs.mkShell {
-            buildInputs = with pkgs; [ xorg.libX11 xorg.libXft xorg.libXinerama xorg.libxcb gcc ];
-          };
         }
       )
     // { overlays.default = overlay; };
