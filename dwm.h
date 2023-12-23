@@ -213,7 +213,6 @@ void setup(void);
 void setupepoll(void);
 void seturgent(Client *c, int urg);
 void showhide(Client *c);
-void sigchld(int unused);
 void spawn(const Arg *arg);
 void swallow(Client *p, Client *c);
 Client *swallowingclient(Window w);

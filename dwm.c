@@ -1553,9 +1553,16 @@ setup(void)
     int i;
     XSetWindowAttributes wa;
     Atom utf8string;
+    struct sigaction sa;
 
-    /* clean up any zombies immediately */
-    sigchld(0);
+    /* do not transsform children into zombiew when they terminate */
+    sigemptyset(&sa.sa_mask);
+    sa.sa_flags = SA_NOCLDSTOP | SA_NOCLDWAIT | SA_RESTART;
+    sa.sa_handler = SIG_IGN;
+    sigaction(SIGCHLD, &sa, NULL);
+
+    /* clean up any zombies (inherited from .xinitrc etc) immediately */
+    while (waitpid(-1, NULL, WNOHANG) > 0);
 
     /* set env vars */
     for (int i = 0; i < LENGTH(envs); i++) {
@@ -1690,18 +1697,17 @@ showhide(Client *c)
 }
 
 void
-sigchld(int unused)
-{
-    if (signal(SIGCHLD, sigchld) == SIG_ERR)
-        die("can't install SIGCHLD handler:");
-    while (0 < waitpid(-1, NULL, WNOHANG));
-}
-
-void
 spawn(const Arg *arg)
 {
+    struct sigaction sa;
     pid_t ppid = getpid();
+
     if (fork() == 0) {
+        sigemptyset(&sa.sa_mask);
+        sa.sa_flags = 0;
+        sa.sa_handler = SIG_DFL;
+        sigaction(SIGCHLD, &sa, NULL);
+
         int r = prctl(PR_SET_PDEATHSIG, SIGTERM);
         if (r == -1) {
             WARNING("Failed to register signal for child");
@@ -1711,9 +1717,11 @@ spawn(const Arg *arg)
             WARNING("Old parent pid != current parent pid, race codition?\n");
             exit(1);
         }
+
         if (dpy)
             close(ConnectionNumber(dpy));
         setsid();
+
         execl("/bin/sh", "/bin/sh", "-c", (char *)arg->v, NULL);
     }
 }

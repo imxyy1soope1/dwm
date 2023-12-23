@@ -136,8 +136,10 @@ static const Exec execs[] = {
     { EXECWRAP("blueman-applet"),                                               0 },
     { EXECWRAP("nm-applet"),                                                    0 },
     { EXECWRAP("/usr/lib/polkit-gnome/polkit-gnome-authentication-agent-1"),    0 },
+    { CMD("pasuspender true"),                                                  1 },
     { CMD("bluetoothreset"),                                                    1 },
-    { CMD("echo 'Xft.dpi:125' | xrdb -merge"),                                  1 },
+    { CMD("echo 'Xft.dpi:120' | xrdb -merge"),                                  1 },
+//  { CMD("xrandr --dpi 120"),                                                  1 },
     { CMD("sleep 1; feh --bg-fill ~/Pictures/wallpaper/simple.png"),            1 },
 };
 
@@ -147,12 +149,14 @@ static const Exec execs[] = {
 #undef EXECWRAP
 
 static const Env envs[] = {
-    /* name                     value              replace */
-    {  "DESKTOP_SESSION",       "dwm",             1 },
-    {  "XDG_CURRENT_DESKTOP",   "dwm",             1 },
-    {  "GTK_IM_MODULE",         "fcitx",           1 },
-    {  "QT_IM_MODULE",          "fcitx",           1 },
-    {  "XMODIFIERS",            "@im=fcitx",       1 },
+    /* name                     value                     replace */
+    {  "DESKTOP_SESSION",       "dwm",                    1 },
+    {  "XDG_CURRENT_DESKTOP",   "dwm",                    1 },
+    {  "GTK_IM_MODULE",         "fcitx",                  1 },
+    {  "QT_IM_MODULE",          "fcitx",                  1 },
+    {  "XMODIFIERS",            "@im=fcitx",              1 },
+    {  "XCURSOR_SIZE",          "24",                     1 },
+    {  "XCURSOR_THEME",         "Bibata-Modern-Classic",  1 },
 };
 
 static const char *ipcsockpath = "/tmp/dwm.sock";
